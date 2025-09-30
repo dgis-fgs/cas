@@ -245,3 +245,103 @@ function loadSettings() {
         questions = JSON.parse(savedQuestions);
     }
 }
+
+// https://script.google.com/macros/s/AKfycbwzb1v2knYe840iixmjY3pB-HDClBlbHRqPHh527gm_IC74Y_S31m32F2eSiBx0sMeP/exec
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwzb1v2knYe840iixmjY3pB-HDClBlbHRqPHh527gm_IC74Y_S31m32F2eSiBx0sMeP/exec';
+
+// Загрузка вопросов с сервера
+async function loadQuestionsFromServer() {
+    try {
+        const response = await fetch(`${BACKEND_URL}/get-questions`);
+        const data = await response.json();
+        
+        if (data.success && data.questions) {
+            questions = data.questions;
+            return true;
+        }
+    } catch (error) {
+        console.error('Error loading questions from server:', error);
+    }
+    return false;
+}
+
+// Сохранение результатов на сервер
+async function saveResultsToServer(results) {
+    try {
+        const response = await fetch(`${BACKEND_URL}/save-results`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(results)
+        });
+        
+        const data = await response.json();
+        return data.success;
+    } catch (error) {
+        console.error('Error saving results to server:', error);
+        return false;
+    }
+}
+
+// Обновите функцию submitAssessment
+async function submitAssessment(event) {
+    event.preventDefault();
+    
+    const currentQ = questions[currentQuestion];
+    const answer = document.getElementById(`answer-${currentQ.id}`).value;
+    
+    if (!answer.trim()) {
+        alert('Пожалуйста, ответьте на текущий вопрос перед завершением оценки');
+        return;
+    }
+
+    saveAnswer(currentQ.id, answer);
+    
+    const results = {
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        answers: answers,
+        summary: calculateSummary()
+    };
+
+    // Сохраняем локально
+    localStorage.setItem('assessment_results', JSON.stringify(results));
+    
+    // Сохраняем на сервер
+    const serverSaved = await saveResultsToServer(results);
+    
+    if (serverSaved) {
+        console.log('Results saved to server successfully');
+    } else {
+        console.warn('Failed to save results to server, using local storage only');
+    }
+    
+    document.getElementById('assessment-form').style.display = 'none';
+    document.getElementById('completion-message').style.display = 'block';
+}
+
+// Обновите функцию loadSettings
+async function loadSettings() {
+    // Загружаем настройки с сервера
+    try {
+        const response = await fetch(`${BACKEND_URL}/get-settings`);
+        const data = await response.json();
+        
+        if (data.success && data.settings) {
+            sheetsUrl = data.settings.sheets_url || '';
+        }
+    } catch (error) {
+        console.error('Error loading settings from server:', error);
+    }
+    
+    // Загружаем вопросы с сервера
+    const questionsLoaded = await loadQuestionsFromServer();
+    if (!questionsLoaded) {
+        // Если не удалось загрузить с сервера, используем локальные
+        const savedQuestions = localStorage.getItem('assessment_questions');
+        if (savedQuestions) {
+            questions = JSON.parse(savedQuestions);
+        }
+    }
+}
