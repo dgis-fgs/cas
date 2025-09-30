@@ -197,7 +197,7 @@ const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwzb1v2knYe840iixmj
 // Загрузка вопросов с сервера
 async function loadQuestionsFromServer() {
     try {
-        const response = await fetch(`${BACKEND_URL}/get-questions`);
+        const response = await fetch(`${BACKEND_URL}?path=questions&action=get`);
         const data = await response.json();
         
         if (data.success && data.questions) {
@@ -213,15 +213,14 @@ async function loadQuestionsFromServer() {
 // Сохранение вопросов на сервер
 async function saveQuestionsToServer(questionsData) {
     try {
-        const response = await fetch(`${BACKEND_URL}/save-questions`, {
+        // Используем параметры URL для совместимости
+        const url = `${BACKEND_URL}?path=questions&action=save&pin=${ADMIN_PIN}`;
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                questions: questionsData,
-                pin: ADMIN_PIN
-            })
+            body: JSON.stringify({questions: questionsData})
         });
         
         const data = await response.json();
@@ -235,7 +234,7 @@ async function saveQuestionsToServer(questionsData) {
 // Получение результатов с сервера
 async function getResultsFromServer() {
     try {
-        const response = await fetch(`${BACKEND_URL}/get-results?pin=${ADMIN_PIN}`);
+        const response = await fetch(`${BACKEND_URL}?path=results&action=get&pin=${ADMIN_PIN}`);
         const data = await response.json();
         
         if (data.success) {
@@ -250,15 +249,9 @@ async function getResultsFromServer() {
 // Сохранение настроек на сервер
 async function saveSettingsToServer(settings) {
     try {
-        const response = await fetch(`${BACKEND_URL}/save-settings`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                ...settings,
-                pin: ADMIN_PIN
-            })
+        const url = `${BACKEND_URL}?path=settings&action=save&pin=${ADMIN_PIN}&sheets_url=${encodeURIComponent(settings.sheets_url || '')}`;
+        const response = await fetch(url, {
+            method: 'POST'
         });
         
         const data = await response.json();
@@ -266,111 +259,5 @@ async function saveSettingsToServer(settings) {
     } catch (error) {
         console.error('Error saving settings to server:', error);
         return false;
-    }
-}
-
-// Обновите функцию saveQuestions
-async function saveQuestions() {
-    const serverSaved = await saveQuestionsToServer(questions);
-    
-    if (serverSaved) {
-        console.log('Questions saved to server successfully');
-        localStorage.setItem('assessment_questions', JSON.stringify(questions));
-        alert('✅ Вопросы сохранены на сервере!');
-    } else {
-        // Fallback: сохраняем только локально
-        localStorage.setItem('assessment_questions', JSON.stringify(questions));
-        alert('✅ Вопросы сохранены локально (ошибка связи с сервером)');
-    }
-}
-
-// Обновите функцию saveSheetsUrl
-async function saveSheetsUrl() {
-    const url = document.getElementById('sheets-url').value;
-    if (url) {
-        const serverSaved = await saveSettingsToServer({ sheets_url: url });
-        
-        if (serverSaved) {
-            localStorage.setItem('sheets_url', url);
-            alert('✅ Настройки сохранены на сервере!');
-        } else {
-            localStorage.setItem('sheets_url', url);
-            alert('✅ Настройки сохранены локально (ошибка связи с сервером)');
-        }
-    } else {
-        alert('⚠️ Пожалуйста, введите URL Google Таблицы');
-    }
-}
-
-// Обновите функцию viewResults
-async function viewResults() {
-    const resultsViewer = document.getElementById('results-viewer');
-    resultsViewer.innerHTML = '<p>🔄 Загрузка результатов с сервера...</p>';
-    
-    const serverResults = await getResultsFromServer();
-    
-    if (serverResults && serverResults.results) {
-        let html = '<h4>Результаты тестирования с сервера:</h4>';
-        html += `<p><strong>Всего записей:</strong> ${serverResults.results.length}</p>`;
-        
-        if (serverResults.results.length > 0) {
-            html += '<div style="max-height: 400px; overflow-y: auto; margin-top: 15px;">';
-            html += '<table style="width: 100%; border-collapse: collapse;">';
-            
-            // Заголовки таблицы
-            html += '<tr style="background: #3498db; color: white;">';
-            serverResults.headers.slice(0, 5).forEach(header => {
-                html += `<th style="padding: 10px; border: 1px solid #ddd; text-align: left;">${header}</th>`;
-            });
-            html += '</tr>';
-            
-            // Данные
-            serverResults.results.slice(0, 10).forEach(result => {
-                html += '<tr style="border-bottom: 1px solid #ddd;">';
-                serverResults.headers.slice(0, 5).forEach(header => {
-                    const value = result[header] || '';
-                    const displayValue = typeof value === 'string' && value.length > 50 ? 
-                        value.substring(0, 50) + '...' : value;
-                    html += `<td style="padding: 8px; border: 1px solid #ddd;">${displayValue}</td>`;
-                });
-                html += '</tr>';
-            });
-            
-            html += '</table>';
-            html += '</div>';
-            
-            if (serverResults.results.length > 10) {
-                html += `<p style="margin-top: 10px; color: #666;">Показано 10 из ${serverResults.results.length} записей</p>`;
-            }
-        } else {
-            html += '<p>Результаты тестирования не найдены.</p>';
-        }
-        
-        resultsViewer.innerHTML = html;
-    } else {
-        resultsViewer.innerHTML = '<p>❌ Не удалось загрузить результаты с сервера</p>';
-    }
-}
-
-// Обновите функцию loadSettings в admin.js
-async function loadSettings() {
-    try {
-        const response = await fetch(`${BACKEND_URL}/get-settings`);
-        const data = await response.json();
-        
-        if (data.success && data.settings) {
-            document.getElementById('sheets-url').value = data.settings.sheets_url || '';
-        }
-    } catch (error) {
-        console.error('Error loading settings from server:', error);
-    }
-    
-    // Загружаем вопросы
-    const questionsLoaded = await loadQuestionsFromServer();
-    if (!questionsLoaded) {
-        const savedQuestions = localStorage.getItem('assessment_questions');
-        if (savedQuestions) {
-            questions = JSON.parse(savedQuestions);
-        }
     }
 }
