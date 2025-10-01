@@ -205,23 +205,40 @@
 
     <script>
         // URL Google Apps Script из assessment.js
-        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwzb1v2knYe840iixmjY3pB-HDClBlbHRqPHh527gm_IC74Y_S31m32F2eSiBx0sMeP/exec';
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwzb1v2knYe840iixmjY3pB-HDClBlbHRqPHh527gm_IC74Y_S31m32F2eSiBx0sMeP/exec';
 
-        let currentQuestion = 0;
-        let answers = {};
-        let questions = [];
+    // Используем переменные из assessment.js, но не переобъявляем их
+    let currentQuestion = window.currentQuestion || 0;
+    let answers = window.answers || {};
+    let questions = window.questions || []; // Убираем const/let если переменная уже объявлена
 
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', function() {
-            loadQuestions();
-            showQuestion(currentQuestion);
-            
-            document.getElementById('prev-btn').addEventListener('click', prevQuestion);
-            document.getElementById('next-btn').addEventListener('click', nextQuestion);
-            document.getElementById('submit-btn').addEventListener('click', submitAssessment);
-        });
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ждем загрузки assessment.js перед инициализацией
+        setTimeout(() => {
+            initializeAssessment();
+        }, 100);
+    });
 
-        function loadQuestions() {
+    function initializeAssessment() {
+        // Проверяем, загрузились ли вопросы из assessment.js
+        if (window.questions && window.questions.length > 0) {
+            questions = window.questions;
+            console.log('✅ Вопросы загружены из assessment.js:', questions.length);
+        } else {
+            loadLocalQuestions();
+            console.log('⚠️ Вопросы загружены локально:', questions.length);
+        }
+        
+        document.getElementById('total-questions').textContent = questions.length;
+        showQuestion(currentQuestion);
+        
+        document.getElementById('prev-btn').addEventListener('click', prevQuestion);
+        document.getElementById('next-btn').addEventListener('click', nextQuestion);
+        document.getElementById('submit-btn').addEventListener('click', submitAssessment);
+    }
+
+    function loadLocalQuestions() {
             // Используем вопросы из assessment.js или загружаем локально
             if (window.questions && window.questions.length > 0) {
                 questions = window.questions;
@@ -320,8 +337,10 @@
 
         function showQuestion(index) {
             const container = document.getElementById('questions-container');
-            if (!questions[index]) return;
-            
+            if (!questions[index]) {
+            console.error('❌ Вопрос не найден:', index);
+            return;
+        }
             const question = questions[index];
             
             container.innerHTML = `
