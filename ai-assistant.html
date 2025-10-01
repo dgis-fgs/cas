@@ -408,6 +408,55 @@
     </div>
 
     <script>
+	const DEEPSEEK_CONFIG = {
+    apiKey: window.DEEPSEEK_API_KEY || 'local_key_for_development',
+    baseURL: 'https://api.deepseek.com/v1',
+    model: 'deepseek-chat'
+};
+
+// Проверка доступности API
+const isDeepSeekAvailable = DEEPSEEK_CONFIG.apiKey && DEEPSEEK_CONFIG.apiKey !== 'local_key_for_development';
+
+class ChatAssistant {
+    constructor() {
+        this.useDeepSeek = isDeepSeekAvailable;
+        this.initializeChat();
+    }
+
+    async analyzeResponse(response, competence) {
+        if (this.useDeepSeek) {
+            try {
+                return await this.analyzeWithDeepSeek(response, competence);
+            } catch (error) {
+                console.warn('DeepSeek API недоступен, использую локальный анализ:', error);
+                return this.basicKeywordAnalysis(response, competence);
+            }
+        } else {
+            return this.basicKeywordAnalysis(response, competence);
+        }
+    }
+
+    async analyzeWithDeepSeek(response, competence) {
+        const apiResponse = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                response: response,
+                competence: competence,
+                question: competences[competence].question
+            })
+        });
+
+        if (!apiResponse.ok) {
+            throw new Error(`API error: ${apiResponse.status}`);
+        }
+
+        const data = await apiResponse.json();
+        return data.score;
+    }
+
         // Компетенции адаптированные для 2ГИС
         const competences = {
             "Нацеленность на результат": {
@@ -479,6 +528,33 @@
                 
                 this.initializeChat();
             }
+			basicKeywordAnalysis(response, competence) {
+				const keywords = competences[competence].keywords;
+				const responseLower = response.toLowerCase();
+        
+				let foundKeywords = 0;
+				keywords.forEach(keyword => {
+					if (responseLower.includes(keyword.toLowerCase())) {
+						foundKeywords++;
+					}
+				});
+        
+				let score = 2;
+				if (foundKeywords >= 3) score = 4;
+				else if (foundKeywords >= 2) score = 3;
+				else if (foundKeywords >= 1) score = 2;
+				else score = 1;
+				
+				const wordCount = response.split(/\s+/).length;
+				if (wordCount > 100) score = Math.min(score + 0.5, 4);
+				if (wordCount < 30) score = Math.max(score - 0.5, 1);
+				
+				if (response.includes('•') || response.includes('-') || response.includes('1.') || response.includes('во-первых')) {
+					score = Math.min(score + 0.3, 4);
+				}
+				
+				return Math.round(score * 2) / 2;
+			}
 
             initializeChat() {
                 this.setupEventListeners();
@@ -625,7 +701,7 @@
             }
 
             analyzeResponse(response, competence) {
-                const keywords = competences[competence].keywords;
+			    const keywords = competences[competence].keywords;
                 const responseLower = response.toLowerCase();
                 
                 let foundKeywords = 0;
@@ -842,5 +918,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             window.chatAssistant = new ChatAssistant();
         });
+		
     </script>
 </body
