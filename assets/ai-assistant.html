@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Ассистент - Оценка компетенций</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: flex;
+            height: 80vh;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .competence-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .competence-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .competence-item:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .competence-item.completed {
+            background: rgba(46, 204, 113, 0.3);
+        }
+
+        .competence-item.current {
+            background: rgba(52, 152, 219, 0.5);
+            border: 2px solid #3498db;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+        }
+
+        .chat-header {
+            background: white;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .chat-header h2 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 15px;
+            border-radius: 15px;
+            line-height: 1.4;
+        }
+
+        .bot-message {
+            background: white;
+            border: 1px solid #e9ecef;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+
+        .user-message {
+            background: #3498db;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            border-bottom-left-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #7f8c8d;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input input:focus {
+            border-color: #3498db;
+        }
+
+        .chat-input button {
+            padding: 12px 25px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .chat-input button:hover {
+            background: #2980b9;
+        }
+
+        .chat-input button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .options {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .option-btn {
+            padding: 8px 15px;
+            background: #ecf0f1;
+            border: 1px solid #bdc3c7;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .option-btn:hover {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .progress-container {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #2ecc71;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .results-section {
+            display: none;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .results-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .result-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .result-score {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .result-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .download-options {
+            margin-top: 30px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            padding: 12px 25px;
+            margin: 0 10px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: background 0.3s;
+        }
+
+        .download-btn:hover {
+            background: #2980b9;
+        }
+
+        .total-score {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 20px 0;
+        }
+
+        .score-description {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Боковая панель с прогрессом -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>🧠 AI Ассистент</h1>
+                <p>Оценка компетенций</p>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-info">
+                    <span>Прогресс</span>
+                    <span id="progress-text">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="competence-list" id="competence-list">
+                <!-- Список компетенций будет заполнен JavaScript -->
+            </div>
+        </div>
+
+        <!-- Основной чат -->
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>DeepSeek AI Ассистент</h2>
+                <p>Помогаю оценить ваши профессиональные компетенции</p>
+            </div>
+
+            <div class="chat-messages" id="chat-messages">
+                <!-- Сообщения будут добавляться здесь -->
+            </div>
+
+            <div class="typing-indicator" id="typing-indicator">
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+
+            <div class="chat-input" id="chat-input">
+                <div class="input-group">
+                    <input type="text" id="message-input" placeholder="Введите ваш ответ..." disabled>
+                    <button id="send-btn" disabled>Отправить</button>
+                </div>
+                <div class="options" id="options-container">
+                    <!-- Опции будут добавляться здесь -->
+                </div>
+            </div>
+
+            <!-- Секция результатов -->
+            <div class="results-section" id="results-section">
+                <h3>🎉 Тестирование завершено!</h3>
+                <div class="total-score" id="total-score">0.0</div>
+                <div class="score-description" id="score-description"></div>
+                
+                <div class="results-grid" id="results-grid">
+                    <!-- Результаты по компетенциям будут здесь -->
+                </div>
+
+                <div class="download-options">
+                    <a href="#" class="download-btn" id="download-svg">📊 Скачать SVG</a>
+                    <a href="#" class="download-btn" id="download-html">📄 Скачать HTML</a>
+                    <button class="download-btn" id="restart-btn" style="background: #e74c3c;">🔄 Начать заново</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Конфигурация DeepSeek API
+        const DEEPSEEK_API_KEY = 'sk-aef81ce8268a4daa8f023f369ca73734'; // Замените на ваш API ключ
+        const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+
+        // Матрица компетенций и вопросов
+        const competences = {
+            "Нацеленность на результат": {
+                question: "Опишите ситуацию, когда вам нужно было достичь сложной цели в сжатые сроки. Какие шаги вы предприняли и как преодолевали препятствия?",
+                keywords: ["мобилизую команду", "распределю зоны", "организую работу", "добьюсь цели", "руководство", "координация"]
+            },
+            "Ориентация на качество": {
+                question: "Расскажите, как вы обеспечиваете высокое качество работы. Что делаете, когда замечаете возможность улучшить процессы или результаты?",
+                keywords: ["создам улучшенную версию", "проведу мастер-класс", "внедрю стандарты", "стандартизация", "оптимизация", "улучшение"]
+            },
+            "Работа в команде": {
+                question: "Опишите ваш опыт разрешения конфликта в команде или ситуацию, когда нужно было наладить сотрудничество между коллегами.",
+                keywords: ["организую командную сессию", "создам взаимопомощь", "налажу взаимодействие", "фасилитация", "сотрудничество", "командность"]
+            },
+            "Готовность к изменениям": {
+                question: "Как вы реагируете на значительные изменения в работе? Приведите пример, когда вам пришлось быстро адаптироваться к новым условиям.",
+                keywords: ["освою систему первым", "покажу преимущества", "создам группу поддержки", "адаптация", "внедрение", "мотивация"]
+            },
+            "Инициативность": {
+                question: "Расскажите о случае, когда вы проявили инициативу для улучшения рабочих процессов или решения проблемы.",
+                keywords: ["предложу альтернативный формат", "проведу хронометраж", "подготовлю регламент", "инициатива", "реформа", "изменение"]
+            },
+            "Ориентация на развитие": {
+                question: "Как вы планируете свое профессиональное развитие? Приведите пример, когда полученные знания помогли улучшить работу.",
+                keywords: ["внедрю методику", "организую обучение", "создаду рабочую группу", "эксперт", "методика", "развитие"]
+            },
+            "Ответственность": {
+                question: "Опишите ситуацию, когда вы взяли на себя ответственность за ошибку или сложную задачу. Как вы действовали?",
+                keywords: ["свяжусь с клиентом", "предложу условия", "возьму последствия", "ответственность", "исправление", "гарантия"]
+            },
+            "Лидерство": {
+                question: "Расскажите о вашем опыте руководства проектом или командой. Как вы мотивировали людей и достигали результатов?",
+                keywords: ["соберу команду", "предложу план", "возьму ключевые задачи", "лидерство", "мобилизация", "руководство"]
+            },
+            "Постановка целей и задач": {
+                question: "Как вы ставите цели и задачи для себя или команды? Опишите ваш подход к планированию сложного проекта.",
+                keywords: ["разобью на этапы", "создам дорожную карту", "проведу воркшоп", "планирование", "стратегия", "приоритеты"]
+            },
+            "Контроль выполнения задач": {
+                question: "Опишите вашу систему контроля за выполнением задач. Как вы обеспечиваете соблюдение сроков и качества?",
+                keywords: ["внедрю стендапы", "создам систему трекинга", "установлю статусы", "автоматизация", "трекинг", "мониторинг"]
+            },
+            "Мотивация подчиненных": {
+                question: "Как вы мотивируете команду на достижение высоких результатов? Приведите пример успешной мотивации.",
+                keywords: ["предложу проекты", "разработаю геймификацию", "предоставлю автономию", "мотивация", "стимулирование", "признание"]
+            },
+            "Развитие подчиненных": {
+                question: "Расскажите, как вы помогаете развиваться членам вашей команды. Как выявляете потребности в развитии и планируете рост?",
+                keywords: ["составлю план развития", "включу в группу", "поручу проект", "менторство", "развитие", "стажировка"]
+            },
+            "Умение договариваться": {
+                question: "Опишите сложные переговоры, в которых вы участвовали. Как вы находили взаимовыгодные решения?",
+                keywords: ["организую рабочую группу", "предложу обмен ресурсами", "найду компромисс", "переговоры", "компромисс", "сотрудничество"]
+            },
+            "Принятие решений": {
+                question: "Расскажите о сложном решении, которое вам пришлось принять. Как вы анализировали ситуацию и оценивали риски?",
+                keywords: ["проведу исследование", "организую внедрение", "создам группу", "анализ", "исследование", "взвешенность"]
+            }
+        };
+
+        class ChatAssistant {
+            constructor() {
+                this.messages = [];
+                this.currentCompetence = null;
+                this.answeredCompetences = new Set();
+                this.scores = {};
+                this.remainingCompetences = [...Object.keys(competences)];
+                this.isTesting = false;
+                
+                this.initializeChat();
+            }
+
+            initializeChat() {
+                this.setupEventListeners();
+                this.showWelcomeMessage();
+                this.renderCompetenceList();
+            }
+
+            setupEventListeners() {
+                const messageInput = document.getElementById('message-input');
+                const sendBtn = document.getElementById('send-btn');
+                const restartBtn = document.getElementById('restart-btn');
+
+                messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !sendBtn.disabled) {
+                        this.handleUserMessage();
+                    }
+                });
+
+                sendBtn.addEventListener('click', () => {
+                    this.handleUserMessage();
+                });
+
+                restartBtn.addEventListener('click', () => {
+                    this.restartTest();
+                });
+
+                // Обработчики для кнопок скачивания
+                document.getElementById('download-svg').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.downloadResults('svg');
+                });
+
+                document.getElementById('download-html').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.downloadResults('html');
+                });
+            }
+
+            async showWelcomeMessage() {
+                await this.typeMessage("Привет! Я AI-ассистент для оценки профессиональных компетенций. 🧠");
+                await this.delay(1000);
+                await this.typeMessage("Готовы пройти тестирование из 14 вопросов? Это займет около 15-20 минут.");
+                
+                this.showOptions(["Да, готов начать", "Расскажите подробнее"]);
+            }
+
+            async typeMessage(text, isUser = false) {
+                const messagesContainer = document.getElementById('chat-messages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+                
+                if (!isUser) {
+                    this.showTypingIndicator();
+                    await this.delay(text.length * 30); // Имитация печати
+                    this.hideTypingIndicator();
+                }
+                
+                messageDiv.textContent = text;
+                messagesContainer.appendChild(messageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                return this.delay(500);
+            }
+
+            showTypingIndicator() {
+                document.getElementById('typing-indicator').style.display = 'block';
+                document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+            }
+
+            hideTypingIndicator() {
+                document.getElementById('typing-indicator').style.display = 'none';
+            }
+
+            showOptions(options) {
+                const optionsContainer = document.getElementById('options-container');
+                optionsContainer.innerHTML = '';
+                
+                options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.className = 'option-btn';
+                    button.textContent = option;
+                    button.addEventListener('click', () => {
+                        this.handleOptionSelect(option);
+                    });
+                    optionsContainer.appendChild(button);
+                });
+            }
+
+            async handleOptionSelect(option) {
+                await this.typeMessage(option, true);
+                
+                if (option === "Да, готов начать") {
+                    this.startTesting();
+                } else if (option === "Расскажите подробнее") {
+                    await this.typeMessage("Тестирование состоит из 14 вопросов, каждый оценивает одну из ключевых профессиональных компетенций. Вы получите развернутую обратную связь и рекомендации по развитию.");
+                    await this.delay(1000);
+                    this.showOptions(["Начать тестирование", "Нужно подумать"]);
+                } else if (option === "Начать тестирование") {
+                    this.startTesting();
+                }
+            }
+
+            startTesting() {
+                this.isTesting = true;
+                document.getElementById('message-input').disabled = false;
+                document.getElementById('send-btn').disabled = false;
+                document.getElementById('options-container').innerHTML = '';
+                
+                this.askNextQuestion();
+            }
+
+            askNextQuestion() {
+                if (this.remainingCompetences.length === 0) {
+                    this.finishTesting();
+                    return;
+                }
+
+                // Выбираем случайную компетенцию из оставшихся
+                const randomIndex = Math.floor(Math.random() * this.remainingCompetences.length);
+                this.currentCompetence = this.remainingCompetences[randomIndex];
+                
+                // Удаляем выбранную компетенцию из оставшихся
+                this.remainingCompetences.splice(randomIndex, 1);
+                
+                this.typeMessage(`Вопрос по компетенции "${this.currentCompetence}":`);
+                this.typeMessage(competences[this.currentCompetence].question);
+                
+                this.updateProgress();
+                this.highlightCurrentCompetence();
+            }
+
+            async handleUserMessage() {
+                const input = document.getElementById('message-input');
+                const message = input.value.trim();
+                
+                if (!message) return;
+                
+                input.value = '';
+                await this.typeMessage(message, true);
+                
+                // Анализируем ответ с помощью AI
+                const score = await this.analyzeResponse(message, this.currentCompetence);
+                this.scores[this.currentCompetence] = score;
+                this.answeredCompetences.add(this.currentCompetence);
+                
+                await this.typeMessage(`Спасибо за ответ! Оценка по компетенции "${this.currentCompetence}": ${score}/4`);
+                
+                this.askNextQuestion();
+            }
+
+            async analyzeResponse(response, competence) {
+                // В реальном приложении здесь будет вызов DeepSeek API
+                // Для демонстрации используем локальный анализ по ключевым словам
+                
+                const keywords = competences[competence].keywords;
+                const responseLower = response.toLowerCase();
+                
+                let score = 2; // Средний балл по умолчанию
+                let foundKeywords = 0;
+                
+                keywords.forEach(keyword => {
+                    if (responseLower.includes(keyword.toLowerCase())) {
+                        foundKeywords++;
+                    }
+                });
+                
+                // Простая логика оценки на основе ключевых слов
+                if (foundKeywords >= 3) score = 4;
+                else if (foundKeywords >= 2) score = 3;
+                else if (foundKeywords >= 1) score = 2;
+                else score = 1;
+                
+                // Добавляем случайную вариативность для демонстрации
+                score += (Math.random() - 0.5) * 0.5;
+                score = Math.max(1, Math.min(4, score));
+                
+                return Math.round(score * 2) / 2; // Округление до 0.5
+            }
+
+            updateProgress() {
+                const total = Object.keys(competences).length;
+                const completed = this.answeredCompetences.size;
+                const progress = (completed / total) * 100;
+                
+                document.getElementById('progress-fill').style.width = `${progress}%`;
+                document.getElementById('progress-text').textContent = `${Math.round(progress)}%`;
+            }
+
+            highlightCurrentCompetence() {
+                const items = document.querySelectorAll('.competence-item');
+                items.forEach(item => {
+                    item.classList.remove('current');
+                    if (item.dataset.competence === this.currentCompetence) {
+                        item.classList.add('current');
+                    }
+                });
+            }
+
+            renderCompetenceList() {
+                const container = document.getElementById('competence-list');
+                container.innerHTML = '';
+                
+                Object.keys(competences).forEach(competence => {
+                    const item = document.createElement('div');
+                    item.className = 'competence-item';
+                    item.dataset.competence = competence;
+                    item.textContent = competence;
+                    container.appendChild(item);
+                });
+            }
+
+            async finishTesting() {
+                this.isTesting = false;
+                document.getElementById('message-input').disabled = true;
+                document.getElementById('send-btn').disabled = true;
+                
+                await this.typeMessage("🎉 Поздравляю! Вы завершили тестирование всех компетенций.");
+                await this.delay(1000);
+                
+                this.showResults();
+            }
+
+            showResults() {
+                // Скрываем чат и показываем результаты
+                document.getElementById('chat-messages').style.display = 'none';
+                document.getElementById('typing-indicator').style.display = 'none';
+                document.getElementById('chat-input').style.display = 'none';
+                document.getElementById('results-section').style.display = 'block';
+                
+                this.calculateAndDisplayResults();
+            }
+
+            calculateAndDisplayResults() {
+                const totalScore = Object.values(this.scores).reduce((sum, score) => sum + score, 0) / Object.keys(this.scores).length;
+                document.getElementById('total-score').textContent = totalScore.toFixed(1);
+                
+                let description = "";
+                if (totalScore >= 3.5) description = "Отличный результат! Вы демонстрируете высокий уровень развития компетенций.";
+                else if (totalScore >= 2.5) description = "Хороший результат! Есть потенциал для дальнейшего развития.";
+                else description = "Есть над чем работать! Рекомендуется focused развитие ключевых навыков.";
+                
+                document.getElementById('score-description').textContent = description;
+                
+                // Отображаем результаты по компетенциям
+                const resultsGrid = document.getElementById('results-grid');
+                resultsGrid.innerHTML = '';
+                
+                Object.entries(this.scores).forEach(([competence, score]) => {
+                    const card = document.createElement('div');
+                    card.className = 'result-card';
+                    card.innerHTML = `
+                        <div class="result-score">${score}/4</div>
+                        <div class="result-label">${competence}</div>
+                    `;
+                    resultsGrid.appendChild(card);
+                });
+            }
+
+            downloadResults(format) {
+                const totalScore = Object.values(this.scores).reduce((sum, score) => sum + score, 0) / Object.keys(this.scores).length;
+                
+                let content, filename, mimeType;
+                
+                if (format === 'svg') {
+                    content = this.generateSVGResults(totalScore);
+                    filename = `competence_results_${new Date().toISOString().split('T')[0]}.svg`;
+                    mimeType = 'image/svg+xml';
+                } else {
+                    content = this.generateHTMLResults(totalScore);
+                    filename = `competence_results_${new Date().toISOString().split('T')[0]}.html`;
+                    mimeType = 'text/html';
+                }
+                
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            generateSVGResults(totalScore) {
+                const width = 800;
+                const height = 600;
+                
+                return `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        .title { font: bold 24px Arial; fill: #2c3e50; }
+        .score { font: bold 48px Arial; fill: #3498db; }
+        .competence { font: 14px Arial; fill: #2c3e50; }
+        .bar-back { fill: #ecf0f1; }
+        .bar-front { fill: #3498db; }
+    </style>
+    
+    <rect width="100%" height="100%" fill="white"/>
+    
+    <text x="400" y="50" text-anchor="middle" class="title">Результаты оценки компетенций</text>
+    <text x="400" y="100" text-anchor="middle" class="score">${totalScore.toFixed(1)}/4.0</text>
+    
+    ${Object.entries(this.scores).map(([competence, score], index) => {
+        const y = 150 + index * 30;
+        const barWidth = (score / 4) * 300;
+        return `
+            <text x="50" y="${y + 15}" class="competence">${competence}</text>
+            <rect x="350" y="${y}" width="300" height="20" class="bar-back"/>
+            <rect x="350" y="${y}" width="${barWidth}" height="20" class="bar-front"/>
+            <text x="660" y="${y + 15}" class="competence">${score}/4</text>
+        `;
+    }).join('')}
+    
+    <text x="400" y="${150 + Object.keys(this.scores).length * 30 + 40}" text-anchor="middle" class="competence">
+        Сгенерировано: ${new Date().toLocaleString('ru-RU')}
+    </text>
+</svg>`;
+            }
+
+            generateHTMLResults(totalScore) {
+                return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Результаты оценки компетенций</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .total-score { font-size: 3em; color: #3498db; margin: 20px 0; }
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 30px 0; }
+        .result-card { background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #3498db; }
+        .result-score { font-size: 1.5em; font-weight: bold; color: #2c3e50; }
+        .result-label { color: #7f8c8d; margin-top: 5px; }
+        .footer { text-align: center; margin-top: 40px; color: #7f8c8d; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Результаты оценки профессиональных компетенций</h1>
+        <div class="total-score">${totalScore.toFixed(1)}/4.0</div>
+        <p>${totalScore >= 3.5 ? "Отличный результат! Вы демонстрируете высокий уровень развития компетенций." : 
+           totalScore >= 2.5 ? "Хороший результат! Есть потенциал для дальнейшего развития." : 
+           "Есть над чем работать! Рекомендуется focused развитие ключевых навыков."}</p>
+    </div>
+    
+    <div class="results-grid">
+        ${Object.entries(this.scores).map(([competence, score]) => `
+            <div class="result-card">
+                <div class="result-score">${score}/4</div>
+                <div class="result-label">${competence}</div>
+            </div>
+        `).join('')}
+    </div>
+    
+    <div class="footer">
+        Сгенерировано: ${new Date().toLocaleString('ru-RU')} | DeepSeek AI Ассистент
+    </div>
+</body>
+</html>`;
+            }
+
+            restartTest() {
+                this.messages = [];
+                this.currentCompetence = null;
+                this.answeredCompetences.clear();
+                this.scores = {};
+                this.remainingCompetences = [...Object.keys(competences)];
+                this.isTesting = false;
+                
+                // Сбрасываем UI
+                document.getElementById('chat-messages').innerHTML = '';
+                document.getElementById('chat-messages').style.display = 'flex';
+                document.getElementById('chat-input').style.display = 'block';
+                document.getElementById('results-section').style.display = 'none';
+                document.getElementById('progress-fill').style.width = '0%';
+                document.getElementById('progress-text').textContent = '0%';
+                
+                this.renderCompetenceList();
+                this.showWelcomeMessage();
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // Инициализация чат-ассистента при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            new ChatAssistant();
+        });
+    </script>
+</body>
+</html>
