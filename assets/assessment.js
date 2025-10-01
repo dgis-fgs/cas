@@ -7,7 +7,7 @@ if (typeof window.questions === 'undefined') {
 }
 
 // База вопросов по умолчанию
-let questions = [
+// let questions = [
     {
         id: 1,
         competence: "Нацеленность на результат",
