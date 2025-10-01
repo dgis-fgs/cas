@@ -276,19 +276,24 @@ async function saveResultsToServer(results) {
     try {
         console.log('Saving results to server...', results);
         
-        // Создаем FormData для более надежной отправки
-        const formData = new URLSearchParams();
-        formData.append('path', 'results');
-        formData.append('action', 'save');
-        formData.append('overallAverage', results.summary.overallAverage);
-        formData.append('userAgent', results.userAgent);
+        // Подготавливаем данные в правильном формате
+        const requestData = {
+            path: 'results',
+            action: 'save',
+            summary: results.summary,
+            userAgent: results.userAgent,
+            answers: results.answers
+        };
         
+        console.log('Sending data:', requestData);
+        
+        // Отправляем как JSON
         const response = await fetch(BACKEND_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
             },
-            body: formData
+            body: JSON.stringify(requestData)
         });
         
         const data = await response.json();
@@ -298,4 +303,71 @@ async function saveResultsToServer(results) {
         console.error('Error saving results to server:', error);
         return false;
     }
+}
+
+// Альтернативная функция загрузки вопросов через XHR
+function loadQuestionsXHR() {
+    return new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', `${BACKEND_URL}?path=questions&action=get&cache=${Date.now()}`, true);
+        
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.success && data.questions) {
+                        questions = data.questions;
+                        console.log('Questions loaded via XHR:', questions.length);
+                        resolve(true);
+                    } else {
+                        resolve(false);
+                    }
+                } catch (error) {
+                    console.error('XHR parse error:', error);
+                    resolve(false);
+                }
+            }
+        };
+        
+        xhr.onerror = function() {
+            console.error('XHR request failed');
+            resolve(false);
+        };
+        
+        xhr.send();
+    });
+}
+
+// Альтернативная функция сохранения через XHR
+function saveResultsXHR(results) {
+    return new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', BACKEND_URL, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        
+        // Подготавливаем данные
+        const formData = new URLSearchParams();
+        formData.append('path', 'results');
+        formData.append('action', 'save');
+        formData.append('data', JSON.stringify(results));
+        
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    resolve(data.success === true);
+                } catch (error) {
+                    console.error('XHR save parse error:', error);
+                    resolve(false);
+                }
+            }
+        };
+        
+        xhr.onerror = function() {
+            console.error('XHR save request failed');
+            resolve(false);
+        };
+        
+        xhr.send(formData.toString());
+    });
 }
