@@ -1,11 +1,3 @@
-// В начале assessment.js
-if (typeof window.questions === 'undefined') {
-    // только тогда объявляем переменные
-    let questions = [...];
-    let currentQuestion = 0;
-    let answers = {};
-}
-
 // База вопросов по умолчанию
 let questions = [
     {
