@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Классическое тестирование - Оценка компетенций 2ГИС</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        /* существующие стили остаются без изменений */
+        .competence-tag {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin-bottom: 15px;
+        }
+        
+        .results-summary {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .competence-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .competence-result:last-child {
+            border-bottom: none;
+        }
+        
+        .score-badge {
+            background: #2c3e50;
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .score-excellent { background: #27ae60; }
+        .score-good { background: #3498db; }
+        .score-average { background: #f39c12; }
+        .score-poor { background: #e74c3c; }
+        
+        .total-score-display {
+            font-size: 3em;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .action-btn.primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .action-btn.secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .action-btn.success {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .admin-link {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .admin-link a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .admin-link a:hover {
+            text-decoration: underline;
+        }
+
+        .debug-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Классическое тестирование</h1>
+            <p>Оценка профессиональных компетенций для сотрудников 2ГИС</p>
+        </div>
+
+        <!-- Форма тестирования -->
+        <div id="assessment-form" class="content">
+            <div class="progress-container">
+                <div class="progress-info">
+                    <span>Вопрос <span id="current-question">1</span> из <span id="total-questions">14</span></span>
+                    <span id="progress-percent">7%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 7%;"></div>
+                </div>
+            </div>
+
+            <div id="questions-container">
+                <!-- Вопросы будут загружаться здесь -->
+            </div>
+
+            <div class="buttons">
+                <button type="button" id="prev-btn" disabled>← Назад</button>
+                <button type="button" id="next-btn">Далее →</button>
+                <button type="button" id="submit-btn" style="display: none;">Завершить оценку</button>
+            </div>
+
+            <div class="admin-link">
+                <a href="index.html">← Вернуться на главную</a>
+                <div style="margin-top: 10px;">
+                    <button onclick="testConnection()" style="background: #95a5a6; color: white; padding: 5px 10px; border: none; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                        🔧 Тест подключения
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Сообщение о завершении -->
+        <div id="completion-message" class="content" style="display: none;">
+            <div class="completion-message">
+                <h2>✅ Оценка завершена</h2>
+                <p>Спасибо за ваши ответы! Результаты будут обработаны и переданы куратору.</p>
+                
+                <div class="total-score-display" id="total-score">0.0</div>
+                <div class="score-description" id="score-description" style="text-align: center; margin-bottom: 30px;"></div>
+                
+                <!-- Блок отладки -->
+                <div id="debug-info" class="debug-info" style="display: none;"></div>
+                
+                <div class="results-summary">
+                    <h3 style="text-align: center; margin-bottom: 20px;">Результаты по компетенциям</h3>
+                    <div id="competence-results">
+                        <!-- Результаты будут добавляться здесь -->
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="action-btn primary" onclick="restartTest()">🔄 Пройти заново</button>
+                    <a href="index.html" class="action-btn secondary">🏠 На главную</a>
+                    <button class="action-btn success" onclick="downloadResults()">📥 Скачать отчет</button>
+                </div>
+
+                <div class="admin-link">
+                    <a href="admin.html">⚙️ Перейти в панель администрирования</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // URL Google Apps Script из assessment.js
+        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwzb1v2knYe840iixmjY3pB-HDClBlbHRqPHh527gm_IC74Y_S31m32F2eSiBx0sMeP/exec';
+
+        let currentQuestion = 0;
+        let answers = {};
+        let questions = [];
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            loadQuestions();
+            showQuestion(currentQuestion);
+            
+            document.getElementById('prev-btn').addEventListener('click', prevQuestion);
+            document.getElementById('next-btn').addEventListener('click', nextQuestion);
+            document.getElementById('submit-btn').addEventListener('click', submitAssessment);
+        });
+
+        function loadQuestions() {
+            // Используем вопросы из assessment.js или загружаем локально
+            if (window.questions && window.questions.length > 0) {
+                questions = window.questions;
+            } else {
+            // Вопросы по умолчанию если assessment.js не загружен
+							questions = [
+								{
+						id: 1,
+						competence: "Нацеленность на результат",
+						scenario: "Важному клиенту нужно предоставить итоговый отчёт завтра к 9:00. В 18:00 вы обнаруживаете критическую ошибку в данных, которую невозможно исправить автоматически. Команда уже устала и готовится уходить.",
+						question: "Опишите ваши действия в этой ситуации:"
+					},
+					{
+						id: 2,
+						competence: "Ориентация на качество",
+						scenario: "Вы замечаете, что коллега постоянно использует устаревший шаблон для документов, из-за чего команда тратит дополнительное время на правки. Коллега работает в компании 15 лет и сопротивляется нововведениям.",
+						question: "Как вы поступите в этой ситуации?"
+					},
+					{
+					  id: 3,
+					  competence: "Работа в команде",
+					  scenario: "В вашем проекте есть сотрудник, который постоянно опаздывает с задачами, но обладает уникальной экспертизой. Команда начинает возмущаться из-за несправедливой нагрузки.",
+					  question: "Ваш план действий для решения этой ситуации?"
+					},
+					{
+					  id: 4,
+					  competence: " Готовность к изменениям",
+					  scenario: "Руководство внедряет новую CRM-систему. Большинство сотрудников саботируют переход, ссылаясь на неудобство и потерю времени.",
+					  question: "Как вы поступите в этой ситуации?"
+					},
+					{
+					  id: 5,
+					  competence: "Инициативность",
+					  scenario: "Вы заметили, что еженедельные планерки занимают 2 часа вместо запланированных 30 минут и не приносят результата. Руководитель доволен текущим форматом.",
+					  question: "Что бы вы изменили?"
+					},
+					 {
+					  id: 6,
+					  competence: "Ориентация на развитие",
+					  scenario: "Вы прошли дорогостоящий курс по новому методу управления проектами. Руководство не планирует внедрять эту методику в компании в ближайший год.",
+					  question: "Как вы поступите в этой ситуации?"
+					},
+					 {
+					  id: 7,
+					  competence: "Ответственность",
+					  scenario: "Вы по ошибке отправили клиенту коммерческое предложение со старой ценой (на 15% ниже текущей). Клиент уже подтвердил согласие и ждёт договор.",
+					  question: "Как вы поступите в этой ситуации?"
+					},
+					 {
+					  id: 8,
+					  competence: "Лидерство",
+					  scenario: "Внезапно уволился ключевой специалист в разгар важного проекта. Команда в панике, сроки горят. Руководство предлагает сдвинуть дедлайны.",
+					  question: "Ваш план действий для решения этой ситуации?"
+					},
+					 {
+					  id: 9,
+					  competence: "Постановка целей и задач",
+					  scenario: "Вам нужно поставить задачи новой команде по запуску сложного продукта. Сроки жёсткие, команда незнакома с продуктом.",
+					  question: "Ваш план действий в данной ситуации?"
+					},
+					 {
+					  id: 10,
+					  competence: "Контроль выполнения задач",
+					  scenario: "Вы руководите распределённой командой из 5 человек. Двое сотрудников постоянно задерживают задачи, но всегда находят оправдания.",
+					  question: "Как вы поступите в этой ситуации?"
+					},
+					 {
+					  id: 11,
+					  competence: "Мотивация подчиненных",
+					  scenario: "Два опытных сотрудника вашей команды демотивированы из-за отмены премий. Они начали формально выполнять обязанности.",
+					  question: "Как вы поступите в этой ситуации?"
+					},
+					 {
+					  id: 12,
+					  competence: "Развитие подчиненных",
+					  scenario: "Молодой перспективный сотрудник просит повышения, но ему не хватает навыков стратегического мышления. На внешнюю позицию компания не готовы.",
+					  question: "Как вы поступите в этой ситуации?"
+					},
+					 {
+					  id: 13,
+					  competence: "Умение договариваться",
+					  scenario: "Смежный отдел заблокировал ваш важный проект, ссылаясь на свою загрузку. Их руководитель не идет на контакт.",
+					  question: "Как вы поступите в этой ситуации?"
+					},
+					 {
+					  id: 14,
+					  competence: "Принятие решений",
+					  scenario: "Нужно выбрать одну из двух стратегий развития продукта. Безопасная стратегия гарантирует 10% рост, инновационная может дать 50% рост или провал.",
+					  question: "Какую стратегию вы выберите и почему?"
+					}
+					// ... добавьте вопросы при необходимости
+            ];
+			 }
+            document.getElementById('total-questions').textContent = questions.length;
+        }
+
+        function showQuestion(index) {
+            const container = document.getElementById('questions-container');
+            if (!questions[index]) return;
+            
+            const question = questions[index];
+            
+            container.innerHTML = `
+                <div class="question-card">
+                    <div class="competence-tag">${question.competence}</div>
+                    <div class="scenario">${question.scenario}</div>
+                    <div class="question-text">${question.question}</div>
+                    <textarea 
+                        id="answer-${question.id}" 
+                        placeholder="Опишите подробно ваши действия и мысли в этой ситуации..."
+                        oninput="validateAnswer(${question.id})"
+                    >${answers[question.id]?.answer || ''}</textarea>
+                </div>
+            `;
+
+            updateProgress();
+            updateButtons();
+        }
+
+        function validateAnswer(questionId) {
+            const answer = document.getElementById(`answer-${questionId}`).value;
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = !answer.trim();
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progress-fill').style.width = `${progress}%`;
+            document.getElementById('current-question').textContent = currentQuestion + 1;
+            document.getElementById('progress-percent').textContent = `${Math.round(progress)}%`;
+        }
+
+        function updateButtons() {
+            document.getElementById('prev-btn').disabled = currentQuestion === 0;
+            
+            if (currentQuestion === questions.length - 1) {
+                document.getElementById('next-btn').style.display = 'none';
+                document.getElementById('submit-btn').style.display = 'block';
+            } else {
+                document.getElementById('next-btn').style.display = 'block';
+                document.getElementById('submit-btn').style.display = 'none';
+            }
+        }
+
+        function nextQuestion() {
+            const currentQ = questions[currentQuestion];
+            const answer = document.getElementById(`answer-${currentQ.id}`).value;
+            
+            if (!answer.trim()) {
+                alert('Пожалуйста, напишите ответ перед переходом к следующему вопросу');
+                return;
+            }
+
+            saveAnswer(currentQ.id, answer);
+            currentQuestion++;
+            showQuestion(currentQuestion);
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion(currentQuestion);
+            }
+        }
+
+        function saveAnswer(questionId, answer) {
+            const question = questions.find(q => q.id === questionId);
+            // Используем функцию анализа из assessment.js если доступна
+            let score;
+            if (typeof analyzeAnswer === 'function') {
+                score = analyzeAnswer(question.competence, answer);
+            } else {
+                score = basicAnalyzeAnswer(question.competence, answer);
+            }
+            
+            answers[questionId] = {
+                competence: question.competence,
+                answer: answer,
+                score: score
+            };
+        }
+
+        // Фолбэк функция анализа если assessment.js не загружен
+        function basicAnalyzeAnswer(competence, answer) {
+            const text = answer.toLowerCase();
+            let score = 2; // Средний балл по умолчанию
+            
+            // Простой анализ по длине ответа
+            const wordCount = text.split(/\s+/).length;
+            if (wordCount > 100) score = 3.5;
+            else if (wordCount > 50) score = 3;
+            else if (wordCount > 25) score = 2.5;
+            else score = 2;
+            
+            return Math.round(score * 2) / 2;
+        }
+
+        async function submitAssessment(event) {
+            event.preventDefault();
+            
+            const currentQ = questions[currentQuestion];
+            const answer = document.getElementById(`answer-${currentQ.id}`).value;
+            
+            if (!answer.trim()) {
+                alert('Пожалуйста, ответьте на текущий вопрос перед завершением оценки');
+                return;
+            }
+
+            saveAnswer(currentQ.id, answer);
+            
+            // Сохраняем результаты
+            const results = await prepareResults();
+            
+            // Показываем результаты пользователю
+            showResults(results);
+            
+            // Пробуем отправить в Google Таблицы
+            await sendResultsToGoogleSheets(results);
+        }
+
+        async function prepareResults() {
+            const summary = calculateSummary();
+            const results = {
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                answers: answers,
+                summary: summary,
+                testType: 'classic',
+                overallScore: summary.overallAverage
+            };
+
+            // Сохраняем локально
+            localStorage.setItem('classic_assessment_results', JSON.stringify(results));
+            return results;
+        }
+
+        async function sendResultsToGoogleSheets(results) {
+            const debugInfo = document.getElementById('debug-info');
+            debugInfo.style.display = 'block';
+            debugInfo.innerHTML = '🔄 Отправка результатов на сервер...';
+
+            try {
+                console.log('📤 Отправка результатов:', results);
+
+                // Подготавливаем данные для отправки
+                const formData = new URLSearchParams();
+                formData.append('action', 'save');
+                formData.append('testType', 'classic');
+                formData.append('timestamp', results.timestamp);
+                formData.append('overallScore', results.overallAverage.toFixed(2));
+                formData.append('userAgent', results.userAgent);
+                formData.append('answers', JSON.stringify(results.answers));
+                formData.append('summary', JSON.stringify(results.summary));
+
+                console.log('📋 Данные для отправки:', formData.toString());
+
+                // Отправляем POST запрос
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString()
+                });
+
+                console.log('📡 Статус ответа:', response.status);
+                console.log('📡 Заголовки ответа:', response.headers);
+
+                const responseText = await response.text();
+                console.log('📨 Текст ответа:', responseText);
+
+                let responseData;
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch (e) {
+                    console.warn('⚠️ Ответ не в JSON формате:', responseText);
+                    responseData = { success: false, error: 'Invalid JSON response' };
+                }
+
+                if (response.ok && responseData.success) {
+                    debugInfo.innerHTML = '✅ Результаты успешно отправлены в Google Таблицы!';
+                    debugInfo.style.background = '#d4edda';
+                    debugInfo.style.borderColor = '#c3e6cb';
+                    debugInfo.style.color = '#155724';
+                } else {
+                    throw new Error(responseData.error || `HTTP error! status: ${response.status}`);
+                }
+
+            } catch (error) {
+                console.error('❌ Ошибка отправки:', error);
+                debugInfo.innerHTML = `
+                    ❌ Ошибка отправки результатов: ${error.message}<br>
+                    <small>Результаты сохранены локально. Попробуйте позже или обратитесь к администратору.</small>
+                `;
+                debugInfo.style.background = '#f8d7da';
+                debugInfo.style.borderColor = '#f5c6cb';
+                debugInfo.style.color = '#721c24';
+            }
+        }
+
+        // Функция для тестирования подключения
+        async function testConnection() {
+            const debugInfo = document.getElementById('debug-info') || createDebugInfo();
+            debugInfo.style.display = 'block';
+            debugInfo.innerHTML = '🔄 Тестирование подключения к серверу...';
+
+            try {
+                const testData = new URLSearchParams();
+                testData.append('action', 'test');
+                testData.append('testType', 'connection_test');
+
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: testData.toString()
+                });
+
+                const responseText = await response.text();
+                console.log('Тестовый ответ:', responseText);
+
+                if (response.ok) {
+                    debugInfo.innerHTML = '✅ Подключение к серверу успешно!';
+                    debugInfo.style.background = '#d4edda';
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+            } catch (error) {
+                console.error('Ошибка подключения:', error);
+                debugInfo.innerHTML = `
+                    ❌ Ошибка подключения: ${error.message}<br>
+                    <small>Проверьте:<br>
+                    1. Доступность интернета<br>
+                    2. URL Google Apps Script<br>
+                    3. Настройки CORS</small>
+                `;
+                debugInfo.style.background = '#f8d7da';
+            }
+        }
+
+        function createDebugInfo() {
+            const debugDiv = document.createElement('div');
+            debugDiv.id = 'debug-info';
+            debugDiv.className = 'debug-info';
+            document.querySelector('.completion-message').insertBefore(debugDiv, document.querySelector('.results-summary'));
+            return debugDiv;
+        }
+
+        function showResults(results) {
+            document.getElementById('assessment-form').style.display = 'none';
+            document.getElementById('completion-message').style.display = 'block';
+			
+			// Создаем блок отладки если его нет
+            if (!document.getElementById('debug-info')) {
+                createDebugInfo();
+            }
+            
+            // Общий балл
+            document.getElementById('total-score').textContent = results.summary.overallAverage.toFixed(1);
+            
+            // Описание результата
+            const description = document.getElementById('score-description');
+            if (results.summary.overallAverage >= 3.5) {
+                description.textContent = "Вы демонстрируете экспертный уровень компетенций! Отлично понимаете специфику работы в 2ГИС!";
+            } else if (results.summary.overallAverage >= 2.5) {
+                description.textContent = "Хороший уровень! Есть потенциал для роста в ключевых направлениях.";
+            } else {
+                description.textContent = "Есть области для развития! Рекомендуется усилить работу над компетенциями, важными для успеха в 2ГИС.";
+            }
+            
+            // Детальные результаты
+            const resultsContainer = document.getElementById('competence-results');
+            resultsContainer.innerHTML = '';
+            
+            for (const [competence, data] of Object.entries(results.summary.competences || {})) {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'competence-result';
+                
+                let scoreClass = 'score-average';
+                if (data.average >= 3.5) scoreClass = 'score-excellent';
+                else if (data.average >= 2.5) scoreClass = 'score-good';
+                else if (data.average < 2) scoreClass = 'score-poor';
+                
+                resultDiv.innerHTML = `
+                    <div>
+                        <strong>${competence}</strong>
+                    </div>
+                    <div class="score-badge ${scoreClass}">
+                        ${data.average.toFixed(1)}/4
+                    </div>
+                `;
+                
+                resultsContainer.appendChild(resultDiv);
+            }
+        }
+
+        function calculateSummary() {
+            const competences = {};
+            let totalScore = 0;
+            let answeredCount = 0;
+
+            for (const [questionId, data] of Object.entries(answers)) {
+                if (!competences[data.competence]) {
+                    competences[data.competence] = { total: 0, count: 0 };
+                }
+                competences[data.competence].total += data.score;
+                competences[data.competence].count++;
+                totalScore += data.score;
+                answeredCount++;
+            }
+
+            for (const competence in competences) {
+                competences[competence].average = competences[competence].total / competences[competence].count;
+            }
+
+            return {
+                overallAverage: totalScore / answeredCount,
+                competences: competences
+            };
+        }
+
+        function restartTest() {
+            currentQuestion = 0;
+            answers = {};
+            
+            document.getElementById('completion-message').style.display = 'none';
+            document.getElementById('assessment-form').style.display = 'block';
+            
+            showQuestion(currentQuestion);
+        }
+
+        function downloadResults() {
+            const results = JSON.parse(localStorage.getItem('classic_assessment_results'));
+            if (!results) {
+                alert('Результаты не найдены');
+                return;
+            }
+
+            const dataStr = JSON.stringify(results, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `classic_assessment_results_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        // Делаем функции глобальными для совместимости с assessment.js
+        window.currentQuestion = currentQuestion;
+        window.answers = answers;
+        window.showQuestion = showQuestion;
+        window.validateAnswer = validateAnswer;
+        window.updateProgress = updateProgress;
+        window.nextQuestion = nextQuestion;
+        window.prevQuestion = prevQuestion;
+        window.saveAnswer = saveAnswer;
+        window.submitAssessment = submitAssessment;
+    </script>
+
+    <!-- Подключаем основной скрипт assessment.js -->
+    <script src="assets/assessment.js"></script>
+</body>
+</html>
