@@ -1,0 +1,22 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v2
+        
+      - name: Build with API Key
+        run: |
+          # Здесь может быть сборка с подстановкой API ключа
+          echo "Deploying without exposing API keys"
+          
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
