@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Ассистент - Оценка компетенций 2ГИС</title>
+    <!-- Подключение config.js -->
+    <script src="config.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -408,14 +410,20 @@
     </div>
 
     <script>
-	const DEEPSEEK_CONFIG = {
-    apiKey: window.DEEPSEEK_API_KEY || 'local_key_for_development',
-    baseURL: 'https://api.deepseek.com/v1',
-    model: 'deepseek-chat'
+	// Используем конфиг из config.js
+const DEEPSEEK_CONFIG = {
+    apiKey: window.CONFIG?.DEEPSEEK_API_KEY || 'local_key_for_development',
+    baseURL: window.CONFIG?.API_BASE_URL || 'https://api.deepseek.com/v1',
+    model: window.CONFIG?.MODEL || 'deepseek-chat'
 };
 
-// Проверка доступности API
-const isDeepSeekAvailable = DEEPSEEK_CONFIG.apiKey && DEEPSEEK_CONFIG.apiKey !== 'local_key_for_development';
+const isDeepSeekAvailable = DEEPSEEK_CONFIG.apiKey && 
+                           DEEPSEEK_CONFIG.apiKey !== '%%DEEPSEEK_API_KEY%%' && 
+                           DEEPSEEK_CONFIG.apiKey !== 'local_key_for_development';
+
+class ChatAssistant {
+    constructor() {
+        this.useDeepSeek = isDeepSeekAvailable;
 
 class ChatAssistant {
     constructor() {
