@@ -200,6 +200,8 @@ async function loadQuestionsFromServer() {
         const response = await fetch(`${BACKEND_URL}?path=questions&action=get`);
         const data = await response.json();
         
+        console.log('Questions response:', data);
+        
         if (data.success && data.questions) {
             questions = data.questions;
             return true;
@@ -215,6 +217,8 @@ async function getResultsFromServer() {
     try {
         const response = await fetch(`${BACKEND_URL}?path=results&action=get&pin=${ADMIN_PIN}`);
         const data = await response.json();
+        
+        console.log('Results response:', data);
         
         if (data.success) {
             return data;
@@ -232,6 +236,7 @@ async function saveSettingsToServer(settings) {
         const response = await fetch(url);
         
         const data = await response.json();
+        console.log('Settings save response:', data);
         return data.success;
     } catch (error) {
         console.error('Error saving settings to server:', error);

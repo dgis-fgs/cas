@@ -252,13 +252,18 @@ const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwzb1v2knYe840iixmj
 // Загрузка вопросов с сервера
 async function loadQuestionsFromServer() {
     try {
+        console.log('Loading questions from server...');
         const response = await fetch(`${BACKEND_URL}?path=questions&action=get`);
         const data = await response.json();
+        
+        console.log('Server response:', data);
         
         if (data.success && data.questions) {
             questions = data.questions;
             console.log('Questions loaded from server:', questions.length);
             return true;
+        } else {
+            console.error('Server returned error:', data.error);
         }
     } catch (error) {
         console.error('Error loading questions from server:', error);
@@ -269,20 +274,25 @@ async function loadQuestionsFromServer() {
 // Сохранение результатов на сервер
 async function saveResultsToServer(results) {
     try {
-        // Используем простой POST запрос
+        console.log('Saving results to server...', results);
+        
+        // Создаем FormData для более надежной отправки
+        const formData = new URLSearchParams();
+        formData.append('path', 'results');
+        formData.append('action', 'save');
+        formData.append('overallAverage', results.summary.overallAverage);
+        formData.append('userAgent', results.userAgent);
+        
         const response = await fetch(BACKEND_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: JSON.stringify({
-                ...results,
-                path: 'results',
-                action: 'save'
-            })
+            body: formData
         });
         
         const data = await response.json();
+        console.log('Save response:', data);
         return data.success;
     } catch (error) {
         console.error('Error saving results to server:', error);
