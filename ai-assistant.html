@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Ассистент - Оценка компетенций 2ГИС</title>
-    <!-- Подключение config.js -->
-    <script src="config.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -344,8 +342,8 @@
 <body>
     <div class="container">
         <div class="chat-header">
-            <h1>🧠 AI Ассистент - Оценка компетенций</h1>
-            <p>Профессиональная оценка для сотрудников 2ГИС</p>
+            <h1>🧠 AI Ассистент - Оценка компетенций 2ГИС</h1>
+            <p>Профессиональная оценка для специалистов по продажам рекламы</p>
         </div>
 
         <div class="progress-container">
@@ -378,13 +376,6 @@
             <div class="options" id="options-container">
                 <!-- Опции будут добавляться здесь -->
             </div>
-			 <!-- ДОБАВИТЬ ЭТОТ БЛОК -->
-			<div style="text-align: center; margin-top: 15px;">
-			<button onclick="window.location.href = 'index.html';" 
-                style="padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 14px; transition: all 0.3s;">
-            🏠 Вернуться на главную
-			</button>
-			</div>
         </div>
 
         <!-- Секция результатов -->
@@ -403,68 +394,11 @@
                 <a href="#" class="download-btn" id="download-svg">📊 Скачать SVG отчет</a>
                 <a href="#" class="download-btn" id="download-html">📄 Скачать HTML отчет</a>
                 <button class="download-btn" id="restart-btn" style="background: #e74c3c;">🔄 Начать заново</button>
-				<button class="download-btn" onclick="window.location.href = 'index.html';" style="background: #95a5a6;">🏠 На главную</button>
             </div>
-			
         </div>
     </div>
 
     <script>
-	// Используем конфиг из config.js
-const DEEPSEEK_CONFIG = {
-    apiKey: window.CONFIG?.DEEPSEEK_API_KEY || 'local_key_for_development',
-    baseURL: window.CONFIG?.API_BASE_URL || 'https://api.deepseek.com/v1',
-    model: window.CONFIG?.MODEL || 'deepseek-chat'
-};
-
-const isDeepSeekAvailable = DEEPSEEK_CONFIG.apiKey && 
-                           DEEPSEEK_CONFIG.apiKey !== '%%DEEPSEEK_API_KEY%%' && 
-                           DEEPSEEK_CONFIG.apiKey !== 'local_key_for_development';
-
-class ChatAssistant {
-    constructor() {
-        this.useDeepSeek = isDeepSeekAvailable;
-
-class ChatAssistant {
-    constructor() {
-        this.useDeepSeek = isDeepSeekAvailable;
-        this.initializeChat();
-    }
-
-    async analyzeResponse(response, competence) {
-        if (this.useDeepSeek) {
-            try {
-                return await this.analyzeWithDeepSeek(response, competence);
-            } catch (error) {
-                console.warn('DeepSeek API недоступен, использую локальный анализ:', error);
-                return this.basicKeywordAnalysis(response, competence);
-            }
-        } else {
-            return this.basicKeywordAnalysis(response, competence);
-        }
-    }
-
-    async analyzeWithDeepSeek(response, competence) {
-        const apiResponse = await fetch('/api/analyze', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                response: response,
-                competence: competence,
-                question: competences[competence].question
-            })
-        });
-
-        if (!apiResponse.ok) {
-            throw new Error(`API error: ${apiResponse.status}`);
-        }
-
-        const data = await apiResponse.json();
-        return data.score;
-    }
-
         // Компетенции адаптированные для 2ГИС
         const competences = {
             "Нацеленность на результат": {
@@ -508,7 +442,7 @@ class ChatAssistant {
                 keywords: ["контроль", "отслеживание", "метрики", "аналитика", "мониторинг", "отчетность", "клиенты", "сервис", "надзор", "проверка"]
             },
             "Мотивация команды": {
-                question: "Команда менеджеров по продажам рекламы в 2ГИС демотивирована из-за сезонного спада спроса в зимний период. Как вы будете поддерживать мотивацию и вовлеченность?",
+                question: "Команда менеджеров по продажам рекламы в 2ГИС демотивирована из-за сезонного спада спроса в летний период. Как вы будете поддерживать мотивацию и вовлеченность?",
                 keywords: ["мотивация", "вовлеченность", "поддержка", "стимулирование", "команда", "энергия", "сезонность", "спад", "воодушевление", "энтузиазм"]
             },
             "Развитие подчиненных": {
@@ -536,33 +470,6 @@ class ChatAssistant {
                 
                 this.initializeChat();
             }
-			basicKeywordAnalysis(response, competence) {
-				const keywords = competences[competence].keywords;
-				const responseLower = response.toLowerCase();
-        
-				let foundKeywords = 0;
-				keywords.forEach(keyword => {
-					if (responseLower.includes(keyword.toLowerCase())) {
-						foundKeywords++;
-					}
-				});
-        
-				let score = 2;
-				if (foundKeywords >= 3) score = 4;
-				else if (foundKeywords >= 2) score = 3;
-				else if (foundKeywords >= 1) score = 2;
-				else score = 1;
-				
-				const wordCount = response.split(/\s+/).length;
-				if (wordCount > 100) score = Math.min(score + 0.5, 4);
-				if (wordCount < 30) score = Math.max(score - 0.5, 1);
-				
-				if (response.includes('•') || response.includes('-') || response.includes('1.') || response.includes('во-первых')) {
-					score = Math.min(score + 0.3, 4);
-				}
-				
-				return Math.round(score * 2) / 2;
-			}
 
             initializeChat() {
                 this.setupEventListeners();
@@ -600,7 +507,7 @@ class ChatAssistant {
             }
 
             async showWelcomeMessage() {
-                await this.typeMessage("Привет! Я AI-ассистент для оценки профессиональных компетенций сотрудников 2ГИС. 🧠");
+                await this.typeMessage("Привет! Я AI-ассистент для оценки профессиональных компетенций менеджеров по продажам рекламы в 2ГИС. 🧠");
                 await this.delay(1000);
                 await this.typeMessage("Тестирование состоит из 14 вопросов, основанных на реальных кейсах из практики работы в 2ГИС.");
                 await this.delay(1000);
@@ -657,7 +564,7 @@ class ChatAssistant {
                 if (option === "Да, начать тестирование" || option === "Начать тестирование") {
                     this.startTesting();
                 } else if (option === "Нужно больше информации") {
-                    await this.typeMessage("Я задам вам 14 ситуационных вопросов из практики продаж рекламы и работе продукта в 2ГИС. Отвечайте максимально подробно, описывая ваши действия и решения.");
+                    await this.typeMessage("Я задам вам 14 ситуационных вопросов из практики продаж рекламы в 2ГИС. Отвечайте максимально подробно, описывая ваши действия и решения.");
                     await this.delay(1000);
                     await this.typeMessage("В конце тестирования вы получите полный отчет с оценкой по всем компетенциям и рекомендациями для развития.");
                     this.showOptions(["Начать тестирование", "Понятно, спасибо"]);
@@ -709,7 +616,7 @@ class ChatAssistant {
             }
 
             analyzeResponse(response, competence) {
-			    const keywords = competences[competence].keywords;
+                const keywords = competences[competence].keywords;
                 const responseLower = response.toLowerCase();
                 
                 let foundKeywords = 0;
@@ -775,11 +682,11 @@ class ChatAssistant {
                 
                 let description = "";
                 if (totalScore >= 3.5) {
-                    description = "Вы демонстрируете экспертный уровень компетенций ! Идеально понимаете специфику работы в 2ГИС!";
+                    description = "Вы демонстрируете экспертный уровень компетенций для работы в 2ГИС! Идеально понимаете специфику продаж рекламы в картографическом сервисе.";
                 } else if (totalScore >= 2.5) {
-                    description = "Хороший уровень! Есть потенциал для роста в ключевых направлениях.";
+                    description = "Хороший уровень для работы в 2ГИС! Есть потенциал для роста в ключевых направлениях продаж рекламных решений.";
                 } else {
-                    description = "Есть области для развития! Рекомендуется усилить работа над компетенциями, важными для успеха в 2ГИС.";
+                    description = "Есть области для развития! Рекомендуется focused работа над компетенциями, важными для успеха в 2ГИС.";
                 }
                 
                 document.getElementById('score-description').textContent = description;
@@ -926,6 +833,5 @@ class ChatAssistant {
         document.addEventListener('DOMContentLoaded', () => {
             window.chatAssistant = new ChatAssistant();
         });
-		
     </script>
 </body
