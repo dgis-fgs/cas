@@ -269,12 +269,17 @@ async function loadQuestionsFromServer() {
 // Сохранение результатов на сервер
 async function saveResultsToServer(results) {
     try {
+        // Используем простой POST запрос
         const response = await fetch(BACKEND_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(results)
+            body: JSON.stringify({
+                ...results,
+                path: 'results',
+                action: 'save'
+            })
         });
         
         const data = await response.json();

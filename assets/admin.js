@@ -210,27 +210,6 @@ async function loadQuestionsFromServer() {
     return false;
 }
 
-// Сохранение вопросов на сервер
-async function saveQuestionsToServer(questionsData) {
-    try {
-        // Используем параметры URL для совместимости
-        const url = `${BACKEND_URL}?path=questions&action=save&pin=${ADMIN_PIN}`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({questions: questionsData})
-        });
-        
-        const data = await response.json();
-        return data.success;
-    } catch (error) {
-        console.error('Error saving questions to server:', error);
-        return false;
-    }
-}
-
 // Получение результатов с сервера
 async function getResultsFromServer() {
     try {
@@ -250,9 +229,7 @@ async function getResultsFromServer() {
 async function saveSettingsToServer(settings) {
     try {
         const url = `${BACKEND_URL}?path=settings&action=save&pin=${ADMIN_PIN}&sheets_url=${encodeURIComponent(settings.sheets_url || '')}`;
-        const response = await fetch(url, {
-            method: 'POST'
-        });
+        const response = await fetch(url);
         
         const data = await response.json();
         return data.success;
